@@ -23,6 +23,7 @@ export function SlotLegend() {
  * - readOnly 모드는 예약 현황 보드에서 사용
  */
 export default function TimeSlotPicker({
+  times = TIME_SLOTS,
   booked = [],
   past = [],
   value,
@@ -41,8 +42,8 @@ export default function TimeSlotPicker({
   }
 
   return (
-    <div role={readOnly ? 'list' : 'radiogroup'} aria-labelledby={labelledBy} className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-      {TIME_SLOTS.map((t) => {
+    <div role={readOnly ? 'list' : 'radiogroup'} aria-labelledby={labelledBy} className={`grid gap-2 ${times.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3 sm:grid-cols-5'}`}>
+      {times.map((t) => {
         const isBooked = booked.includes(t);
         const isPast = past.includes(t);
         const disabled = isBooked || isPast;

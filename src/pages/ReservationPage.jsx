@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, createReservation, fetchBookedTimes, IS_DEMO } from '../api/reservationApi';
-import { SERVICES, findService } from '../config/services';
+import { SERVICES, findService, getTimesForDate } from '../config/services';
 import { useToast } from '../context/ToastContext';
 import { formatDateKo, getOpenDates, getPastTimes } from '../utils/date';
 import { formatPhone, onlyDigits, validateReservation } from '../utils/validation';
@@ -297,6 +297,7 @@ export default function ReservationPage() {
             <div data-field="time" tabIndex={-1} className="outline-none">
               {form.date ? (
                 <TimeSlotPicker
+                  times={getTimesForDate(form.date)}
                   booked={booked}
                   past={past}
                   value={form.time}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchBookedTimes } from '../api/reservationApi';
-import { TIME_SLOTS } from '../config/services';
+import { getTimesForDate } from '../config/services';
 import { formatDateKo, getOpenDates, getPastTimes } from '../utils/date';
 import DatePicker from './DatePicker';
 import TimeSlotPicker, { SlotLegend } from './TimeSlotPicker';
@@ -31,8 +31,9 @@ export default function StatusBoard() {
   }, [date]);
 
   const past = date ? getPastTimes(date) : [];
-  const available = TIME_SLOTS.filter((t) => !booked.includes(t) && !past.includes(t)).length;
-  const ratio = Math.round((available / TIME_SLOTS.length) * 100);
+  const times = date ? getTimesForDate(date) : [];
+  const available = times.filter((t) => !booked.includes(t) && !past.includes(t)).length;
+  const ratio = times.length ? Math.round((available / times.length) * 100) : 0;
 
   return (
     <section id="status" tabIndex={-1} aria-labelledby="status-title" className="scroll-mt-24 py-16 outline-none sm:py-20">
@@ -65,7 +66,7 @@ export default function StatusBoard() {
                     <p className="text-sm font-semibold text-ink-soft">{formatDateKo(date)}</p>
                     <p className="mt-1 text-3xl font-bold" aria-live="polite">
                       {loading ? '—' : available}
-                      <span className="text-base font-medium text-ink-soft"> / {TIME_SLOTS.length} 가능</span>
+                      <span className="text-base font-medium text-ink-soft"> / {times.length} 가능</span>
                     </p>
                   </div>
                   <div className="w-28 lg:w-full">
@@ -94,7 +95,7 @@ export default function StatusBoard() {
                       {error}
                     </p>
                   ) : (
-                    <TimeSlotPicker booked={booked} past={past} loading={loading} readOnly labelledBy="status-title" />
+                    <TimeSlotPicker times={times} booked={booked} past={past} loading={loading} readOnly labelledBy="status-title" />
                   )}
                   <Link to={`/reserve?date=${date}`} className="btn-primary mt-5 w-full lg:hidden">
                     이 날짜로 예약하기

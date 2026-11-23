@@ -1,4 +1,4 @@
-import { OPEN_WEEKDAYS, HOLIDAYS, BOOKABLE_DAYS, TIME_SLOTS, ALLOWED_DATES } from '../config/services';
+import { OPEN_WEEKDAYS, HOLIDAYS, BOOKABLE_DAYS, ALLOWED_DATES, getTimesForDate } from '../config/services';
 
 const pad = (n) => String(n).padStart(2, '0');
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -29,7 +29,7 @@ export const isPastSlot = (date, time) => {
 };
 
 /** 이미 지난 시간 목록 */
-export const getPastTimes = (date) => TIME_SLOTS.filter((t) => isPastSlot(date, t));
+export const getPastTimes = (date) => getTimesForDate(date).filter((t) => isPastSlot(date, t));
 
 /** 예약 가능한 운영일 목록 (오늘 포함, 남은 시간이 없는 오늘은 제외) */
 export const getOpenDates = (count = BOOKABLE_DAYS) => {
@@ -37,7 +37,7 @@ export const getOpenDates = (count = BOOKABLE_DAYS) => {
   if (ALLOWED_DATES.length) {
     return [...ALLOWED_DATES]
       .sort()
-      .filter((d) => getPastTimes(d).length < TIME_SLOTS.length)
+      .filter((d) => getPastTimes(d).length < getTimesForDate(d).length)
       .slice(0, count);
   }
 
@@ -48,7 +48,7 @@ export const getOpenDates = (count = BOOKABLE_DAYS) => {
   while (result.length < count && guard < 120) {
     const ymd = toYMD(cursor);
     const open = OPEN_WEEKDAYS.includes(cursor.getDay()) && !HOLIDAYS.includes(ymd);
-    if (open && getPastTimes(ymd).length < TIME_SLOTS.length) result.push(ymd);
+    if (open && getPastTimes(ymd).length < getTimesForDate(ymd).length) result.push(ymd);
     cursor.setDate(cursor.getDate() + 1);
     guard += 1;
   }

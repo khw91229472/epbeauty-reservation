@@ -27,6 +27,16 @@ const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30
 // 예약 가능한 날짜 (비워두면 [] 날짜 제한 없음) — 프론트엔드 ALLOWED_DATES 와 동일하게 유지
 const ALLOWED_DATES = ['2026-11-25', '2026-11-26'];
 
+// 날짜별 예약 시간 (없는 날짜는 TIME_SLOTS 사용) — 프론트엔드 DATE_TIME_SLOTS 와 동일하게 유지
+const DATE_TIME_SLOTS = {
+  '2026-11-25': ['12:20', '13:20'],
+  '2026-11-26': ['09:00', '10:00', '12:20', '13:30'],
+};
+
+function timesFor_(date) {
+  return DATE_TIME_SLOTS[date] || TIME_SLOTS;
+}
+
 const COL = {
   timestamp: 1, name: 2, studentId: 3, phone: 4, service: 5, date: 6, time: 7, memo: 8, status: 9,
 };
@@ -83,7 +93,7 @@ function doGet(e) {
     }
 
     if (action === 'check') {
-      if (!isValidDate_(p.date) || TIME_SLOTS.indexOf(p.time) === -1) {
+      if (!isValidDate_(p.date) || timesFor_(p.date).indexOf(p.time) === -1) {
         return json_({ ok: false, code: 'INVALID', message: '날짜/시간 형식이 올바르지 않습니다.' });
       }
       const available = getBookedTimes_(p.date).indexOf(p.time) === -1;
@@ -180,7 +190,7 @@ function validate_(d) {
   if (SERVICES.indexOf(d.service) === -1) return '서비스를 선택해 주세요.';
   if (!isValidDate_(d.date)) return '예약 날짜가 올바르지 않습니다.';
   if (ALLOWED_DATES.length && ALLOWED_DATES.indexOf(d.date) === -1) return '예약할 수 없는 날짜입니다.';
-  if (TIME_SLOTS.indexOf(d.time) === -1) return '예약 시간이 올바르지 않습니다.';
+  if (timesFor_(d.date).indexOf(d.time) === -1) return '예약 시간이 올바르지 않습니다.';
   return '';
 }
 

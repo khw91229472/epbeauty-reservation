@@ -43,6 +43,15 @@ export const TIME_SLOTS = [
   '13:00', '13:30', '14:00', '14:30', '15:00',
 ];
 
+// 날짜별 예약 시간 (여기에 있는 날짜는 TIME_SLOTS 대신 이 시간만 사용)
+export const DATE_TIME_SLOTS = {
+  '2026-11-25': ['12:20', '13:20'],
+  '2026-11-26': ['09:00', '10:00', '12:20', '13:30'],
+};
+
+/** 해당 날짜의 예약 시간 목록 */
+export const getTimesForDate = (date) => DATE_TIME_SLOTS[date] || TIME_SLOTS;
+
 // 운영 요일 (0=일, 1=월 ... 6=토)
 export const OPEN_WEEKDAYS = [1, 2, 3, 4, 5];
 
