@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, createReservation, fetchBookedTimes, IS_DEMO } from '../api/reservationApi';
-import { SERVICES, findService, getTimesForDate } from '../config/services';
+import { SERVICES, findService, getScheduleDates, getTimesFor } from '../config/services';
 import { useToast } from '../context/ToastContext';
-import { formatDateKo, getOpenDates, getPastTimes } from '../utils/date';
+import { formatDateKo, formatDateShort, getOpenDates, getPastTimes } from '../utils/date';
 import { formatPhone, onlyDigits, validateReservation } from '../utils/validation';
 import DatePicker from '../components/DatePicker';
 import TimeSlotPicker, { SlotLegend } from '../components/TimeSlotPicker';
@@ -64,12 +64,17 @@ export default function ReservationPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const dates = useMemo(() => getOpenDates(), []);
 
   const [form, setForm] = useState(() => {
     const svc = findService(params.get('service') || '');
     const qDate = params.get('date');
-    return { ...INITIAL, serviceId: svc?.id || '', date: dates.includes(qDate) ? qDate : '' };
+    const svcDates = svc ? getOpenDates(svc.id) : [];
+    return {
+      ...INITIAL,
+      serviceId: svc?.id || '',
+      // 날짜가 하나뿐이면 자동 선택
+      date: svcDates.includes(qDate) ? qDate : svcDates.length === 1 ? svcDates[0] : '',
+    };
   });
   const [errors, setErrors] = useState({});
   const [booked, setBooked] = useState([]);
@@ -77,17 +82,35 @@ export default function ReservationPage() {
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef(null);
 
+  const service = findService(form.serviceId);
+  const dates = useMemo(() => (form.serviceId ? getOpenDates(form.serviceId) : []), [form.serviceId]);
+  const times = form.serviceId && form.date ? getTimesFor(form.serviceId, form.date) : [];
+  const past = form.serviceId && form.date ? getPastTimes(form.serviceId, form.date) : [];
+
   const set = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-  // 날짜별 예약된 시간 불러오기
-  const loadBooked = useCallback(async (date) => {
-    if (!date) return [];
+  // 서비스 변경: 해당 서비스 일정에 없는 날짜/시간은 초기화
+  const selectService = (id) => {
+    const svcDates = getOpenDates(id);
+    setForm((f) => ({
+      ...f,
+      serviceId: id,
+      detail: '',
+      date: svcDates.includes(f.date) ? f.date : svcDates.length === 1 ? svcDates[0] : '',
+      time: '',
+    }));
+    setErrors((e) => ({ ...e, serviceId: undefined, date: undefined, time: undefined }));
+  };
+
+  // 서비스 + 날짜별 예약된 시간 불러오기
+  const loadBooked = useCallback(async (date, serviceName) => {
+    if (!date || !serviceName) return [];
     setSlotLoading(true);
     try {
-      const list = await fetchBookedTimes(date);
+      const list = await fetchBookedTimes(date, serviceName);
       setBooked(list);
       return list;
     } finally {
@@ -95,11 +118,12 @@ export default function ReservationPage() {
     }
   }, []);
 
+  const serviceName = service?.name;
   useEffect(() => {
-    if (!form.date) return;
+    if (!form.date || !serviceName) return;
     let cancelled = false;
     setSlotLoading(true);
-    fetchBookedTimes(form.date)
+    fetchBookedTimes(form.date, serviceName)
       .then((list) => {
         if (cancelled) return;
         setBooked(list);
@@ -111,10 +135,7 @@ export default function ReservationPage() {
     return () => {
       cancelled = true;
     };
-  }, [form.date, toast]);
-
-  const service = findService(form.serviceId);
-  const past = form.date ? getPastTimes(form.date) : [];
+  }, [form.date, serviceName, toast]);
 
   const focusFirstError = (errs) => {
     const order = ['serviceId', 'date', 'time', 'name', 'studentId', 'phone', 'memo', 'agree'];
@@ -137,7 +158,7 @@ export default function ReservationPage() {
     setSubmitting(true);
     try {
       // 1) 예약 직전 서버에서 중복 검사
-      const latest = await loadBooked(form.date);
+      const latest = await loadBooked(form.date, service.name);
       if (latest.includes(form.time)) {
         set('time', '');
         setErrors((x) => ({ ...x, time: '방금 다른 분이 예약한 시간입니다. 다른 시간을 선택해 주세요.' }));
@@ -165,7 +186,7 @@ export default function ReservationPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'DUPLICATE') {
         set('time', '');
-        loadBooked(form.date).catch(() => {});
+        loadBooked(form.date, service.name).catch(() => {});
       }
       toast.error(err.message || '예약 중 오류가 발생했습니다.');
     } finally {
@@ -219,10 +240,7 @@ export default function ReservationPage() {
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onClick={() => {
-                      set('serviceId', s.id);
-                      set('detail', '');
-                    }}
+                    onClick={() => selectService(s.id)}
                     className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition sm:flex-col sm:items-start ${
                       selected ? 'border-blush-400 bg-blush-50' : 'border-sand-100 bg-white hover:border-blush-200'
                     }`}
@@ -232,7 +250,7 @@ export default function ReservationPage() {
                     </span>
                     <span>
                       <span className="block font-bold">{s.name}</span>
-                      <span className="block text-xs text-ink-soft">{s.duration}</span>
+                      <span className="block text-xs text-ink-soft">{getScheduleDates(s.id).map(formatDateShort).join(', ') || s.duration}</span>
                     </span>
                     {selected && (
                       <span aria-hidden="true" className="ml-auto grid h-6 w-6 place-items-center rounded-full bg-blush-500 text-xs text-white sm:hidden">
@@ -279,6 +297,15 @@ export default function ReservationPage() {
               예약 날짜 <span className="text-blush-500" aria-hidden="true">*</span>
             </p>
             <div data-field="date" tabIndex={-1} className="outline-none">
+              {!form.serviceId ? (
+                <p className="rounded-2xl border border-dashed border-sand-200 py-6 text-center text-sm text-ink-soft">
+                  서비스를 먼저 선택해 주세요.
+                </p>
+              ) : dates.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-sand-200 py-6 text-center text-sm text-ink-soft">
+                  예약 가능한 날짜가 없습니다.
+                </p>
+              ) : (
               <DatePicker
                 dates={dates}
                 value={form.date}
@@ -288,6 +315,7 @@ export default function ReservationPage() {
                 }}
                 labelledBy="date-label"
               />
+              )}
             </div>
             {errors.date && <p className="field-error" role="alert">{errors.date}</p>}
 
@@ -295,9 +323,9 @@ export default function ReservationPage() {
               예약 시간 <span className="text-blush-500" aria-hidden="true">*</span>
             </p>
             <div data-field="time" tabIndex={-1} className="outline-none">
-              {form.date ? (
+              {form.serviceId && form.date ? (
                 <TimeSlotPicker
-                  times={getTimesForDate(form.date)}
+                  times={times}
                   booked={booked}
                   past={past}
                   value={form.time}

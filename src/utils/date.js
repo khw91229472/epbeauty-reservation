@@ -1,4 +1,4 @@
-import { OPEN_WEEKDAYS, HOLIDAYS, BOOKABLE_DAYS, ALLOWED_DATES, getTimesForDate } from '../config/services';
+import { getScheduleDates, getTimesFor } from '../config/services';
 
 const pad = (n) => String(n).padStart(2, '0');
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -18,7 +18,11 @@ export const formatDateKo = (s) => {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAY_KO[d.getDay()]})`;
 };
 
-export const weekdayKo = (s) => WEEKDAY_KO[fromYMD(s).getDay()];
+/** '2026-11-27' -> '11/27(금)' */
+export const formatDateShort = (s) => {
+  const d = fromYMD(s);
+  return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAY_KO[d.getDay()]})`;
+};
 
 /** 해당 날짜/시간이 이미 지났는지 */
 export const isPastSlot = (date, time) => {
@@ -28,29 +32,9 @@ export const isPastSlot = (date, time) => {
   return slot.getTime() <= Date.now();
 };
 
-/** 이미 지난 시간 목록 */
-export const getPastTimes = (date) => getTimesForDate(date).filter((t) => isPastSlot(date, t));
+/** 서비스 + 날짜에서 이미 지난 시간 목록 */
+export const getPastTimes = (serviceId, date) => getTimesFor(serviceId, date).filter((t) => isPastSlot(date, t));
 
-/** 예약 가능한 운영일 목록 (오늘 포함, 남은 시간이 없는 오늘은 제외) */
-export const getOpenDates = (count = BOOKABLE_DAYS) => {
-  // 지정 날짜 모드: 지정된 날짜 중 아직 예약 가능한 시간이 남은 날짜만
-  if (ALLOWED_DATES.length) {
-    return [...ALLOWED_DATES]
-      .sort()
-      .filter((d) => getPastTimes(d).length < getTimesForDate(d).length)
-      .slice(0, count);
-  }
-
-  const result = [];
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  let guard = 0;
-  while (result.length < count && guard < 120) {
-    const ymd = toYMD(cursor);
-    const open = OPEN_WEEKDAYS.includes(cursor.getDay()) && !HOLIDAYS.includes(ymd);
-    if (open && getPastTimes(ymd).length < getTimesForDate(ymd).length) result.push(ymd);
-    cursor.setDate(cursor.getDate() + 1);
-    guard += 1;
-  }
-  return result;
-};
+/** 서비스의 예약 가능한 날짜 (모든 시간이 지난 날짜는 제외) */
+export const getOpenDates = (serviceId) =>
+  getScheduleDates(serviceId).filter((d) => getPastTimes(serviceId, d).length < getTimesFor(serviceId, d).length);

@@ -42,18 +42,21 @@ const demoSave = (list) => localStorage.setItem(DEMO_KEY, JSON.stringify(list));
 // ---------------- 공개 API ----------------
 
 /**
- * 특정 날짜에 이미 예약된 시간 목록
+ * 특정 서비스 + 날짜에 이미 예약된 시간 목록 (중복 검사는 서비스별)
  * @param {string} date YYYY-MM-DD
+ * @param {string} service 서비스명 (예: '네일')
  * @returns {Promise<string[]>} 예: ['09:00', '13:30']
  */
-export async function fetchBookedTimes(date) {
+export async function fetchBookedTimes(date, service) {
   if (IS_DEMO) {
     await sleep(350);
     return demoLoad()
-      .filter((r) => r.date === date && r.status !== '취소')
+      .filter((r) => r.date === date && r.service === service && r.status !== '취소')
       .map((r) => r.time);
   }
-  const data = await request(`${GAS_URL}?action=booked&date=${encodeURIComponent(date)}`);
+  const data = await request(
+    `${GAS_URL}?action=booked&date=${encodeURIComponent(date)}&service=${encodeURIComponent(service)}`,
+  );
   return data.booked || [];
 }
 
@@ -67,7 +70,9 @@ export async function createReservation(payload) {
   if (IS_DEMO) {
     await sleep(700);
     const list = demoLoad();
-    const dup = list.some((r) => r.date === body.date && r.time === body.time && r.status !== '취소');
+    const dup = list.some(
+      (r) => r.date === body.date && r.time === body.time && r.service === body.service && r.status !== '취소',
+    );
     if (dup) throw new ApiError('이미 예약된 시간입니다. 다른 시간을 선택해 주세요.', 'DUPLICATE');
     const saved = { ...body, status: '예약완료' };
     list.push(saved);
