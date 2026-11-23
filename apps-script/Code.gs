@@ -24,6 +24,9 @@ const CANCELLED_STATUS = '취소'; // 상태를 '취소'로 바꾸면 해당 시
 const SERVICES = ['메이크업', '네일', '피부에스테틱'];
 const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00', '14:30', '15:00'];
 
+// 예약 가능한 날짜 (비워두면 [] 날짜 제한 없음) — 프론트엔드 ALLOWED_DATES 와 동일하게 유지
+const ALLOWED_DATES = ['2026-11-25', '2026-11-26'];
+
 const COL = {
   timestamp: 1, name: 2, studentId: 3, phone: 4, service: 5, date: 6, time: 7, memo: 8, status: 9,
 };
@@ -176,6 +179,7 @@ function validate_(d) {
   if (!/^01[016789]\d{7,8}$/.test(String(d.phone || '').replace(/\D/g, ''))) return '연락처 형식이 올바르지 않습니다.';
   if (SERVICES.indexOf(d.service) === -1) return '서비스를 선택해 주세요.';
   if (!isValidDate_(d.date)) return '예약 날짜가 올바르지 않습니다.';
+  if (ALLOWED_DATES.length && ALLOWED_DATES.indexOf(d.date) === -1) return '예약할 수 없는 날짜입니다.';
   if (TIME_SLOTS.indexOf(d.time) === -1) return '예약 시간이 올바르지 않습니다.';
   return '';
 }

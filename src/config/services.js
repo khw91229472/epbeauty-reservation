@@ -49,7 +49,12 @@ export const OPEN_WEEKDAYS = [1, 2, 3, 4, 5];
 // 휴무일 (YYYY-MM-DD)
 export const HOLIDAYS = ['2026-12-25', '2027-01-01'];
 
-// 오늘부터 며칠(운영일 기준)까지 예약 가능한지
+// 예약 가능한 날짜를 직접 지정 (YYYY-MM-DD)
+// - 값이 있으면 이 날짜들만 선택 가능 (요일/휴무일 설정 무시)
+// - 빈 배열 [] 로 두면 OPEN_WEEKDAYS 기준으로 자동 계산
+export const ALLOWED_DATES = ['2026-11-25', '2026-11-26'];
+
+// 오늘부터 며칠(운영일 기준)까지 예약 가능한지 (ALLOWED_DATES 가 비어 있을 때만 사용)
 export const BOOKABLE_DAYS = 14;
 
 export const STEPS = [

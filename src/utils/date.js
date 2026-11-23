@@ -1,4 +1,4 @@
-import { OPEN_WEEKDAYS, HOLIDAYS, BOOKABLE_DAYS, TIME_SLOTS } from '../config/services';
+import { OPEN_WEEKDAYS, HOLIDAYS, BOOKABLE_DAYS, TIME_SLOTS, ALLOWED_DATES } from '../config/services';
 
 const pad = (n) => String(n).padStart(2, '0');
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -33,6 +33,14 @@ export const getPastTimes = (date) => TIME_SLOTS.filter((t) => isPastSlot(date, 
 
 /** 예약 가능한 운영일 목록 (오늘 포함, 남은 시간이 없는 오늘은 제외) */
 export const getOpenDates = (count = BOOKABLE_DAYS) => {
+  // 지정 날짜 모드: 지정된 날짜 중 아직 예약 가능한 시간이 남은 날짜만
+  if (ALLOWED_DATES.length) {
+    return [...ALLOWED_DATES]
+      .sort()
+      .filter((d) => getPastTimes(d).length < TIME_SLOTS.length)
+      .slice(0, count);
+  }
+
   const result = [];
   const cursor = new Date();
   cursor.setHours(0, 0, 0, 0);
