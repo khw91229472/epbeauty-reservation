@@ -22,16 +22,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install
         run: npm install
 
       - name: Build
+        # Apps Script URL 은 저장소의 .env.production 파일에서 읽습니다.
         run: npm run build
-        env:
-          # 저장소 Settings > Secrets and variables > Actions 에 VITE_GAS_URL 등록
-          VITE_GAS_URL: ${{ secrets.VITE_GAS_URL }}
 
       - uses: actions/configure-pages@v5
 
