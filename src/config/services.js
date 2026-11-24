@@ -63,6 +63,18 @@ export const SCHEDULE = {
 export const getScheduleDates = (serviceId) => Object.keys(SCHEDULE[serviceId] || {}).sort();
 
 /** 서비스 + 날짜의 예약 시간 목록 */
+// 한 타임당 최대 인원 (Code.gs 의 CAPACITY 와 동일하게 유지)
+export const CAPACITY = {
+  makeup: 8,
+  nail: 5,
+  skin: 6,
+};
+
+export const getCapacity = (serviceId) => CAPACITY[serviceId] || 1;
+
+/** 해당 시간의 예약 인원 */
+export const countAt = (booked, time) => booked.filter((b) => b === time).length;
+
 export const getTimesFor = (serviceId, date) => (SCHEDULE[serviceId] && SCHEDULE[serviceId][date]) || [];
 
 export const STEPS = [
@@ -77,7 +89,7 @@ export const NOTICES = [
   '모든 실습은 담당 선생님의 지도 아래 학생이 진행합니다.',
   '예약 시간 5분 전까지 실습실에 도착해 주세요. 10분 이상 늦으면 자동 취소될 수 있습니다.',
   '서비스별 일정: 피부에스테틱 11/26(목) 오후 · 메이크업 · 네일 11/27(금) 오전/오후',
-  '같은 서비스의 같은 시간에는 1건만 예약할 수 있습니다.',
+  '한 타임당 정원: 메이크업 8명 · 네일 5명 · 피부에스테틱 6명 (정원이 차면 자동 마감)',
   '피부 질환, 알레르기가 있는 경우 요청사항에 꼭 적어주세요.',
   '예약 변경 · 취소는 뷰티과 교무실로 연락해 주세요.',
 ];

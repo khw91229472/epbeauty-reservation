@@ -19,12 +19,15 @@ export function SlotLegend() {
 
 /**
  * 시간 선택 그리드
- * - 예약 가능: 초록색 / 예약 마감·지난 시간: 회색(비활성) / 선택: 핑크
+ * - 예약 가능: 초록색 / 정원 마감·지난 시간: 회색(비활성) / 선택: 핑크
+ * - booked: 예약된 시간 배열 (1건당 1개, 중복 포함) → 시간별 인원 계산
+ * - capacity: 한 타임당 최대 인원
  * - readOnly 모드는 예약 현황 보드에서 사용
  */
 export default function TimeSlotPicker({
   times = TIME_SLOTS,
   booked = [],
+  capacity = 1,
   past = [],
   value,
   onChange,
@@ -44,11 +47,13 @@ export default function TimeSlotPicker({
   return (
     <div role={readOnly ? 'list' : 'radiogroup'} aria-labelledby={labelledBy} className={`grid gap-2 ${times.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3 sm:grid-cols-5'}`}>
       {times.map((t) => {
-        const isBooked = booked.includes(t);
+        const count = booked.filter((b) => b === t).length;
+        const remaining = Math.max(capacity - count, 0);
+        const isFull = remaining === 0;
         const isPast = past.includes(t);
-        const disabled = isBooked || isPast;
+        const disabled = isFull || isPast;
         const selected = value === t;
-        const status = isBooked ? '예약 마감' : isPast ? '시간 지남' : '예약 가능';
+        const status = isPast ? '시간 지남' : isFull ? '정원 마감' : `잔여 ${remaining}/${capacity}명`;
 
         const cls = selected
           ? 'border-blush-500 bg-blush-500 text-white shadow-soft'
@@ -59,7 +64,7 @@ export default function TimeSlotPicker({
         const content = (
           <>
             <span className={`text-[15px] font-bold ${disabled && !selected ? 'line-through' : ''}`}>{t}</span>
-            <span className="text-[11px] font-medium opacity-80">{selected ? '선택됨' : status}</span>
+            <span className="text-[11px] font-medium opacity-80">{selected ? `선택됨 · 잔여 ${remaining}명` : status}</span>
           </>
         );
 

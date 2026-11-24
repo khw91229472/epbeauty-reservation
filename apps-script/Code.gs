@@ -22,6 +22,13 @@ const SCHEDULE = {
   },
 };
 
+// 한 타임당 최대 인원 — 프론트엔드 CAPACITY 와 동일하게 유지
+const CAPACITY = {
+  '메이크업': 8,
+  '네일': 5,
+  '피부에스테틱': 6,
+};
+
 function timesFor_(service, date) {
   return (SCHEDULE[service] && SCHEDULE[service][date]) || [];
 }
@@ -80,9 +87,10 @@ function doPost(e) {
     const error = validate_(data);
     if (error) return json_({ ok: false, code: 'INVALID', message: error });
 
-    // 중복 검사: 같은 서비스 + 같은 날짜 + 같은 시간
-    if (getBookedTimes_(data.date, data.service).indexOf(data.time) !== -1) {
-      return json_({ ok: false, code: 'DUPLICATE', message: '이미 예약된 시간입니다. 다른 시간을 선택해 주세요.' });
+    // 정원 검사: 같은 서비스 + 같은 날짜 + 같은 시간의 예약 수가 정원 이상이면 마감
+    const count = getBookedTimes_(data.date, data.service).filter(function (t) { return t === data.time; }).length;
+    if (count >= (CAPACITY[data.service] || 1)) {
+      return json_({ ok: false, code: 'DUPLICATE', message: '정원이 마감된 시간입니다. 다른 시간을 선택해 주세요.' });
     }
 
     const tz = Session.getScriptTimeZone() || 'Asia/Seoul';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ApiError, createReservation, fetchBookedTimes, IS_DEMO } from '../api/reservationApi';
-import { SERVICES, findService, getScheduleDates, getTimesFor } from '../config/services';
+import { SERVICES, countAt, findService, getCapacity, getScheduleDates, getTimesFor } from '../config/services';
 import { useToast } from '../context/ToastContext';
 import { formatDateKo, formatDateShort, getOpenDates, getPastTimes } from '../utils/date';
 import { formatPhone, onlyDigits, validateReservation } from '../utils/validation';
@@ -85,6 +85,7 @@ export default function ReservationPage() {
   const service = findService(form.serviceId);
   const dates = useMemo(() => (form.serviceId ? getOpenDates(form.serviceId) : []), [form.serviceId]);
   const times = form.serviceId && form.date ? getTimesFor(form.serviceId, form.date) : [];
+  const capacity = getCapacity(form.serviceId);
   const past = form.serviceId && form.date ? getPastTimes(form.serviceId, form.date) : [];
 
   const set = (key, value) => {
@@ -128,7 +129,7 @@ export default function ReservationPage() {
         if (cancelled) return;
         setBooked(list);
         // 선택했던 시간이 마감되었으면 해제
-        setForm((f) => (list.includes(f.time) ? { ...f, time: '' } : f));
+        setForm((f) => (f.time && countAt(list, f.time) >= getCapacity(f.serviceId) ? { ...f, time: '' } : f));
       })
       .catch((e) => !cancelled && toast.error(e.message))
       .finally(() => !cancelled && setSlotLoading(false));
@@ -159,10 +160,10 @@ export default function ReservationPage() {
     try {
       // 1) 예약 직전 서버에서 중복 검사
       const latest = await loadBooked(form.date, service.name);
-      if (latest.includes(form.time)) {
+      if (countAt(latest, form.time) >= capacity) {
         set('time', '');
-        setErrors((x) => ({ ...x, time: '방금 다른 분이 예약한 시간입니다. 다른 시간을 선택해 주세요.' }));
-        toast.error('이미 예약된 시간입니다. 다른 시간을 선택해 주세요.');
+        setErrors((x) => ({ ...x, time: '방금 정원이 마감된 시간입니다. 다른 시간을 선택해 주세요.' }));
+        toast.error('정원이 마감된 시간입니다. 다른 시간을 선택해 주세요.');
         return;
       }
 
@@ -327,6 +328,7 @@ export default function ReservationPage() {
                 <TimeSlotPicker
                   times={times}
                   booked={booked}
+                  capacity={capacity}
                   past={past}
                   value={form.time}
                   onChange={(t) => set('time', t)}

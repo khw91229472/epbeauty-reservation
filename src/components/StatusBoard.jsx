@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchBookedTimes } from '../api/reservationApi';
-import { SERVICES, getTimesFor } from '../config/services';
+import { SERVICES, countAt, getCapacity, getTimesFor } from '../config/services';
 import { formatDateKo, getOpenDates, getPastTimes } from '../utils/date';
 import DatePicker from './DatePicker';
 import TimeSlotPicker, { SlotLegend } from './TimeSlotPicker';
@@ -39,7 +39,10 @@ export default function StatusBoard() {
 
   const times = date ? getTimesFor(serviceId, date) : [];
   const past = date ? getPastTimes(serviceId, date) : [];
-  const available = times.filter((t) => !booked.includes(t) && !past.includes(t)).length;
+  const capacity = getCapacity(serviceId);
+  const openTimes = times.filter((t) => !past.includes(t));
+  const available = openTimes.filter((t) => countAt(booked, t) < capacity).length;
+  const seatsLeft = openTimes.reduce((sum, t) => sum + Math.max(capacity - countAt(booked, t), 0), 0);
   const ratio = times.length ? Math.round((available / times.length) * 100) : 0;
   const reserveLink = `/reserve?service=${serviceId}&date=${date}`;
 
@@ -97,7 +100,10 @@ export default function StatusBoard() {
                     </p>
                     <p className="mt-1 text-3xl font-bold" aria-live="polite">
                       {loading ? '—' : available}
-                      <span className="text-base font-medium text-ink-soft"> / {times.length} 가능</span>
+                      <span className="text-base font-medium text-ink-soft"> / {times.length} 타임 가능</span>
+                    </p>
+                    <p className="mt-1 text-sm text-ink-soft">
+                      남은 자리 <b className="text-emerald-600">{loading ? '—' : seatsLeft}명</b> · 타임당 {capacity}명
                     </p>
                   </div>
                   <div className="w-28 lg:w-full">
@@ -123,7 +129,7 @@ export default function StatusBoard() {
                       {error}
                     </p>
                   ) : (
-                    <TimeSlotPicker times={times} booked={booked} past={past} loading={loading} readOnly labelledBy="status-title" />
+                    <TimeSlotPicker times={times} booked={booked} capacity={capacity} past={past} loading={loading} readOnly labelledBy="status-title" />
                   )}
                   <Link to={reserveLink} className="btn-primary mt-5 w-full lg:hidden">
                     이 일정으로 예약하기
