@@ -9,7 +9,7 @@ export const SERVICES = [
     en: 'Make-up',
     icon: '💄',
     description: '얼굴형과 피부톤에 맞춘 자연스러운 메이크업으로 생기를 더해드립니다.',
-    items: ['눈썹 정리', '데일리 메이크업'],
+    items: ['데일리 메이크업'],
     duration: '약 40분',
     tone: 'from-blush-100 via-blush-50 to-white',
     accent: 'bg-blush-200',
