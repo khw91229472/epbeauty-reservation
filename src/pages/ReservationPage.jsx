@@ -7,6 +7,7 @@ import { formatDateKo, formatDateShort, getOpenDates, getPastTimes } from '../ut
 import { formatPhone, onlyDigits, validateReservation } from '../utils/validation';
 import DatePicker from '../components/DatePicker';
 import TimeSlotPicker, { SlotLegend } from '../components/TimeSlotPicker';
+import ExampleGallery from '../components/ExampleGallery';
 import { LoadingOverlay } from '../components/Spinner';
 
 const INITIAL = {
@@ -16,6 +17,7 @@ const INITIAL = {
   phone: '',
   serviceId: '',
   detail: '',
+  styleExample: '',
   date: '',
   time: '',
   memo: '',
@@ -100,6 +102,7 @@ export default function ReservationPage() {
       ...f,
       serviceId: id,
       detail: '',
+      styleExample: '',
       date: svcDates.includes(f.date) ? f.date : svcDates.length === 1 ? svcDates[0] : '',
       time: '',
     }));
@@ -168,7 +171,13 @@ export default function ReservationPage() {
       }
 
       // 2) 예약 저장 (서버에서도 LockService 로 한 번 더 중복 검사)
-      const memo = [form.detail && `[${form.detail}]`, form.memo.trim()].filter(Boolean).join(' ');
+      const memo = [
+        form.detail && `[${form.detail}]`,
+        form.styleExample && `[희망: ${form.styleExample}]`,
+        form.memo.trim(),
+      ]
+        .filter(Boolean)
+        .join(' ');
       const payload = {
         name: form.name.trim(),
         studentId: form.userType === 'staff' ? '교직원' : form.studentId.trim(),
@@ -288,6 +297,19 @@ export default function ReservationPage() {
                     );
                   })}
                 </div>
+
+                {service.examples?.length > 0 && (
+                  <div className="mt-5">
+                    <p className="mb-2.5 text-sm font-semibold">
+                      시술 예시 사진 <span className="font-normal text-ink-soft">(사진 클릭 시 확대 · 희망 스타일 선택 가능)</span>
+                    </p>
+                    <ExampleGallery
+                      examples={service.examples}
+                      selected={form.styleExample}
+                      onSelect={(label) => set('styleExample', label)}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </SectionCard>

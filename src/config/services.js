@@ -10,6 +10,12 @@ export const SERVICES = [
     icon: '💄',
     description: '얼굴형과 피부톤에 맞춘 자연스러운 메이크업으로 생기를 더해드립니다.',
     items: ['데일리 메이크업'],
+    examples: [
+      { src: './examples/makeup-1.jpg', label: '예시 1' },
+      { src: './examples/makeup-2.jpg', label: '예시 2' },
+      { src: './examples/makeup-3.jpg', label: '예시 3' },
+      { src: './examples/makeup-4.jpg', label: '예시 4' },
+    ],
     duration: '약 40분',
     tone: 'from-blush-100 via-blush-50 to-white',
     accent: 'bg-blush-200',
@@ -67,7 +73,7 @@ export const getScheduleDates = (serviceId) => Object.keys(SCHEDULE[serviceId] |
 export const CAPACITY = {
   makeup: 8,
   nail: 5,
-  skin: 6,
+  skin: 8,
 };
 
 export const getCapacity = (serviceId) => CAPACITY[serviceId] || 1;
@@ -89,7 +95,7 @@ export const NOTICES = [
   '모든 실습은 담당 선생님의 지도 아래 학생이 진행합니다.',
   '예약 시간 5분 전까지 실습실에 도착해 주세요. 10분 이상 늦으면 자동 취소될 수 있습니다.',
   '서비스별 일정: 피부에스테틱 11/26(목) 오후 · 메이크업 · 네일 11/27(금) 오전/오후',
-  '한 타임당 정원: 메이크업 8명 · 네일 5명 · 피부에스테틱 6명 (정원이 차면 자동 마감)',
+  '한 타임당 정원: 메이크업 8명 · 네일 5명 · 피부에스테틱 8명 (정원이 차면 자동 마감)',
   '피부 질환, 알레르기가 있는 경우 요청사항에 꼭 적어주세요.',
   '예약 변경 · 취소는 뷰티과 교무실로 연락해 주세요.',
 ];

@@ -26,7 +26,7 @@ const SCHEDULE = {
 const CAPACITY = {
   '메이크업': 8,
   '네일': 5,
-  '피부에스테틱': 6,
+  '피부에스테틱': 8,
 };
 
 function timesFor_(service, date) {

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import ExampleGallery from './ExampleGallery';
 
 export default function ServiceCard({ service, index }) {
   return (
@@ -30,6 +31,15 @@ export default function ServiceCard({ service, index }) {
             </li>
           ))}
         </ul>
+
+        {service.examples?.length > 0 && (
+          <div className="mt-5">
+            <p className="mb-2 text-xs font-semibold text-ink-soft">
+              시술 예시 <span className="font-normal">(클릭하면 크게 볼 수 있어요)</span>
+            </p>
+            <ExampleGallery examples={service.examples} compact />
+          </div>
+        )}
 
         <div className="mt-auto flex items-center justify-between pt-6">
           <span className="text-xs font-medium text-ink-soft">⏱ {service.duration}</span>
